@@ -5,9 +5,22 @@ actions:
   - name: station_id
     action: station_id
     lane: duck
-    every: "15m"
+    every: "5m"
 
-  - name: time_check
-    action: time_check
-    lane: duck
-    time: "09:00"
+  - name: news
+    action: news
+    lane: takeover
+    time: "19:45"
+    params:
+      country: us
+      category: general
+      count: 5
+
+  - name: sport
+    action: news
+    lane: takeover
+    time: "19:50"
+    params:
+      country: us
+      category: sports
+      count: 5

@@ -1,5 +1,7 @@
 # secrets — never commit GCP keys
 creds/
+.env
+*.env
 *.json.key
 service-account*.json
 
@@ -12,3 +14,4 @@ __pycache__/
 music/
 generated/
 station_ids/
+short_stories
