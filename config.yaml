@@ -1,0 +1,8 @@
+lead_seconds: 300
+tick_seconds: 20
+
+actions:
+  - name: time_check
+    time: "09:00"
+    action: time_check
+    params: {}
