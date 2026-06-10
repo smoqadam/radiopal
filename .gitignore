@@ -1,0 +1,13 @@
+# secrets — never commit GCP keys
+creds/
+*.json.key
+service-account*.json
+
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# audio content (not code) — keep the repo light
+music/
+generated/
