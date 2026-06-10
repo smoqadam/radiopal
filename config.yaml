@@ -5,7 +5,7 @@ actions:
   - name: station_id
     action: station_id
     lane: duck
-    every: "5m"
+    every: "15m"
 
   - name: news
     action: news
