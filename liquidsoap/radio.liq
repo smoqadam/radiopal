@@ -1,25 +1,14 @@
-#!/usr/bin/env liquidsoap
-
-# --- telnet server: how the scheduler pushes dynamic content ---
 settings.server.telnet := true
 settings.server.telnet.bind_addr := "0.0.0.0"
 settings.server.telnet.port := 1234
 
-# --- music: the always-on rotating library ---
 music = playlist(mode="randomize", reload_mode="watch", "/music")
 
-# --- station IDs: pre-rendered brand stings, woven in between songs ---
-ids = playlist(mode="randomize", reload_mode="watch", "/station_ids")
-# rotate weights [1,5] => 1 station ID for every 5 songs (tune the ratio here)
-music = rotate(weights=[1, 5], [ids, music])
+duck = request.queue(id="duck")
+bed = smooth_add(p=0.2, duration=1.0, normal=music, special=duck)
 
-# --- interrupt queue: news / weather / voiceovers pushed at runtime ---
-# registers telnet commands:  interrupt.push <uri>   interrupt.queue   ...
-interrupt = request.queue(id="interrupt")
+takeover = request.queue(id="takeover")
 
-# --- smooth crossfade instead of a hard cut, in both directions ---
-# during the ~1s overlap both sources play: music fades down as the voice rises,
-# and back up when the interrupt ends.
 def crossfade(old, new) =
   add(normalize=false, [
     fade.out(duration=1.0, old),
@@ -27,18 +16,9 @@ def crossfade(old, new) =
   ])
 end
 
-# --- priority fallback: anything in the queue wins, else music ---
-# track_sensitive=false => an interrupt cuts in without waiting for the song to end
-radio = fallback(
-  track_sensitive=false,
-  transitions=[crossfade, crossfade],
-  [interrupt, music]
-)
-
-# never go silent (plays blank if every source is empty)
+radio = fallback(track_sensitive=false, transitions=[crossfade, crossfade], [takeover, bed])
 radio = mksafe(radio)
 
-# --- stream to icecast ---
 output.icecast(
   %mp3(bitrate=128),
   host="icecast",

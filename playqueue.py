@@ -9,6 +9,7 @@ class QueueItem:
     path: str
     play_at: datetime
     name: str
+    lane: str = "takeover"
     metadata: dict = field(default_factory=dict)
 
 

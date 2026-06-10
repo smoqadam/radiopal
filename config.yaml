@@ -2,7 +2,12 @@ lead_seconds: 300
 tick_seconds: 20
 
 actions:
+  - name: station_id
+    action: station_id
+    lane: duck
+    every: "15m"
+
   - name: time_check
-    time: "09:00"
     action: time_check
-    params: {}
+    lane: duck
+    time: "09:00"

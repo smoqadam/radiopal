@@ -5,7 +5,7 @@ import socket
 
 HOST = "localhost"
 PORT = 1234
-MOUNT = "/generated"
+ROOT = pathlib.Path(__file__).resolve().parent
 
 
 def command(text):
@@ -21,6 +21,6 @@ def command(text):
     return b"".join(chunks).decode(errors="replace").strip()
 
 
-def push(local_path):
-    name = pathlib.Path(local_path).name
-    return command(f"interrupt.push {MOUNT}/{name}")
+def push(local_path, lane):
+    container = "/" + str(pathlib.Path(local_path).resolve().relative_to(ROOT))
+    return command(f"{lane}.push {container}")

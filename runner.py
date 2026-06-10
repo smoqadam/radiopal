@@ -14,8 +14,8 @@ class Runner:
     def tick(self, now):
         for item in self.queue.due(now):
             try:
-                reply = liquidsoap.push(item.path)
+                reply = liquidsoap.push(item.path, item.lane)
             except Exception:
                 log.exception("play failed for %s", item.name)
                 continue
-            log.info("played %s -> %r", item.name, reply)
+            log.info("played %s lane=%s -> %r", item.name, item.lane, reply)
