@@ -21,6 +21,7 @@ services:
     volumes:
       - ./liquidsoap/radio.liq:/radio.liq:ro
       - ./music:/music:ro
+      - ./station_ids:/station_ids:ro
       - ./generated:/generated:ro
     command: ["liquidsoap", "/radio.liq"]
     restart: unless-stopped

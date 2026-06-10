@@ -8,6 +8,11 @@ settings.server.telnet.port := 1234
 # --- music: the always-on rotating library ---
 music = playlist(mode="randomize", reload_mode="watch", "/music")
 
+# --- station IDs: pre-rendered brand stings, woven in between songs ---
+ids = playlist(mode="randomize", reload_mode="watch", "/station_ids")
+# rotate weights [1,5] => 1 station ID for every 5 songs (tune the ratio here)
+music = rotate(weights=[1, 5], [ids, music])
+
 # --- interrupt queue: news / weather / voiceovers pushed at runtime ---
 # registers telnet commands:  interrupt.push <uri>   interrupt.queue   ...
 interrupt = request.queue(id="interrupt")
