@@ -1,0 +1,26 @@
+services:
+  icecast:
+    image: libretime/icecast:2.4.4   # multi-arch (amd64+arm64); runs on Mac dev and the Pi
+    container_name: radiopal-icecast
+    ports:
+      - "8000:8000"
+    environment:
+      ICECAST_SOURCE_PASSWORD: hackme
+      ICECAST_ADMIN_PASSWORD: admin
+      ICECAST_RELAY_PASSWORD: hackme
+      ICECAST_HOSTNAME: localhost
+    restart: unless-stopped
+
+  liquidsoap:
+    image: savonet/liquidsoap:v2.2.5
+    container_name: radiopal-liquidsoap
+    depends_on:
+      - icecast
+    ports:
+      - "1234:1234"          # telnet: push dynamic content here
+    volumes:
+      - ./liquidsoap/radio.liq:/radio.liq:ro
+      - ./music:/music:ro
+      - ./generated:/generated:ro
+    command: ["liquidsoap", "/radio.liq"]
+    restart: unless-stopped
