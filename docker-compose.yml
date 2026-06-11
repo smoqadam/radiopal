@@ -5,9 +5,9 @@ services:
     ports:
       - "8000:8000"
     environment:
-      ICECAST_SOURCE_PASSWORD: hackme
-      ICECAST_ADMIN_PASSWORD: admin
-      ICECAST_RELAY_PASSWORD: hackme
+      ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD}
+      ICECAST_ADMIN_PASSWORD: ${ICECAST_ADMIN_PASSWORD}
+      ICECAST_RELAY_PASSWORD: ${ICECAST_RELAY_PASSWORD:-${ICECAST_SOURCE_PASSWORD}}
       ICECAST_HOSTNAME: localhost
     restart: unless-stopped
 
@@ -18,6 +18,9 @@ services:
       - icecast
     ports:
       - "1234:1234"          # telnet: push dynamic content here
+    environment:
+      ICECAST_SOURCE_USER: ${ICECAST_SOURCE_USER:-source}
+      ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD}
     volumes:
       - ./liquidsoap/radio.liq:/radio.liq:ro
       - ${MUSIC_DIR:-./music}:/music:ro
