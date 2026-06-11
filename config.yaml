@@ -2,25 +2,30 @@ lead_seconds: 300
 tick_seconds: 20
 
 actions:
-  - name: station_id
-    action: station_id
-    lane: duck
-    every: "15m"
+  # - name: station_id
+  #   action: station_id
+  #   lane: duck
+  #   every: "15m"
 
-  - name: news
-    action: news
+  - name: short_stories
+    action: short_stories
     lane: takeover
-    time: "19:45"
-    params:
-      country: us
-      category: general
-      count: 5
+    every: "2h"
 
-  - name: sport
-    action: news
-    lane: takeover
-    time: "19:50"
-    params:
-      country: us
-      category: sports
-      count: 5
+  # - name: news
+  #   action: news
+  #   lane: takeover
+  #   time: "19:45"
+  #   params:
+  #     country: us
+  #     category: general
+  #     count: 5
+
+  # - name: sport
+  #   action: news
+  #   lane: takeover
+  #   time: "19:50"
+  #   params:
+  #     country: us
+  #     category: sports
+  #     count: 5
