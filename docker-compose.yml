@@ -1,6 +1,6 @@
 services:
   icecast:
-    image: libretime/icecast:2.4.4   # multi-arch (amd64+arm64); runs on Mac dev and the Pi
+    image: libretime/icecast:2.4.4
     container_name: radiopal-icecast
     ports:
       - "8000:8000"
@@ -24,4 +24,21 @@ services:
       - ./station_ids:/station_ids:ro
       - ./generated:/generated:ro
     command: ["liquidsoap", "/radio.liq"]
+    restart: unless-stopped
+
+  scheduler:
+    build: .
+    container_name: radiopal-scheduler
+    depends_on:
+      - liquidsoap
+    environment:
+      LIQUIDSOAP_HOST: liquidsoap
+      GOOGLE_APPLICATION_CREDENTIALS: /app/creds/radiopal-tts.json
+    env_file:
+      - ./creds/deepseek.env
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./station_ids:/app/station_ids:ro
+      - ./creds:/app/creds:ro
+      - ./generated:/app/generated
     restart: unless-stopped

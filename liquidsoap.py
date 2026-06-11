@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import os
 import pathlib
 import socket
 
-HOST = "localhost"
-PORT = 1234
+HOST = os.environ.get("LIQUIDSOAP_HOST", "localhost")
+PORT = int(os.environ.get("LIQUIDSOAP_PORT", "1234"))
 ROOT = pathlib.Path(__file__).resolve().parent
 
 

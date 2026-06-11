@@ -1,0 +1,9 @@
+.venv
+creds
+generated
+station_ids
+music
+__pycache__
+*.pyc
+.git
+*.md
