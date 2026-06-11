@@ -30,12 +30,11 @@ I have a few ideas in mind for the future:
 
   - Connecting my calendar so the "host" can remind me of my appointments.
 
-  - Listening to my audiobook library every night at 9 PM.
+  - Listening to my audiobook library every night at 9 PM
 
-  - Automatically playing jazz when it's raining outside.
-  top RSS feed headlines.
-
-  - Scraping my favorite unread email newsletters and turning them into a 10-minute podcast segment during my lunch break.
+  - Automatically playing jazz when it's raining outside
+  
+  - Read top RSS headlines 
 
   - Tying into smart home events, so the host casually announces when the laundry is done or the 3D printer finishes a job.
 
@@ -61,18 +60,9 @@ I have a few ideas in mind for the future:
 
 1. **Configuration file.** Copy the example and fill it in:
 
-   ```
-   cp .env.example .env
-
-  ##
-   MUSIC_DIR=./music
-   STATION_IDS_DIR=./station_ids
-   GENERATED_DIR=./generated
-   SHORT_STORIES_DIR=./short_stories
-
-   DEEPSEEK_API_KEY=...
-   NEWSAPI_KEY=...
-   ```
+```
+cp .env.example .env
+```
 
 2. **Google credentials.** Place your Google service-account JSON at
    `creds/radiopal-tts.json`.
