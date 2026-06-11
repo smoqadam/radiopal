@@ -20,9 +20,9 @@ services:
       - "1234:1234"          # telnet: push dynamic content here
     volumes:
       - ./liquidsoap/radio.liq:/radio.liq:ro
-      - ./music:/music:ro
-      - ./station_ids:/station_ids:ro
-      - ./generated:/generated:ro
+      - ${MUSIC_DIR:-./music}:/music:ro
+      - ${STATION_IDS_DIR:-./station_ids}:/station_ids:ro
+      - ${GENERATED_DIR:-./generated}:/generated:ro
     command: ["liquidsoap", "/radio.liq"]
     restart: unless-stopped
 
@@ -34,11 +34,11 @@ services:
     environment:
       LIQUIDSOAP_HOST: liquidsoap
       GOOGLE_APPLICATION_CREDENTIALS: /app/creds/radiopal-tts.json
-    env_file:
-      - ./creds/deepseek.env
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      NEWSAPI_KEY: ${NEWSAPI_KEY}
     volumes:
       - ./config.yaml:/app/config.yaml:ro
-      - ./station_ids:/app/station_ids:ro
+      - ${STATION_IDS_DIR:-./station_ids}:/app/station_ids:ro
       - ./creds:/app/creds:ro
-      - ./generated:/app/generated
+      - ${GENERATED_DIR:-./generated}:/app/generated
     restart: unless-stopped
