@@ -102,6 +102,7 @@
       <select id="lane">
         <option value="takeover">takeover</option>
         <option value="duck">duck</option>
+        <option value="next">next</option>
       </select>
     </div>
     <div class="row">
@@ -164,11 +165,16 @@ async function loadClips() {
   try {
     const clips = await api("/api/clips");
     const sel = $("clip");
+    const current = sel.value;
     sel.innerHTML = clips.length
       ? clips.map((c) => `<option value="${c}">${c}</option>`).join("")
       : '<option value="">no clips found</option>';
+    if (current && clips.includes(current)) sel.value = current;
   } catch { /* ignore */ }
 }
+
+$("clip").addEventListener("mousedown", loadClips);
+window.addEventListener("focus", loadClips);
 
 $("skip").onclick = async () => {
   setStatus("skipping...");

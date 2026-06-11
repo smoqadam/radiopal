@@ -10,7 +10,7 @@ from actions import REGISTRY
 from scheduler import DailySchedule, IntervalSchedule
 
 CONFIG_PATH = Path(__file__).resolve().parent / "config.yaml"
-LANES = ("duck", "takeover")
+LANES = ("duck", "takeover", "next")
 
 
 @dataclass

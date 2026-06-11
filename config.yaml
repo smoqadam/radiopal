@@ -3,14 +3,16 @@ tick_seconds: 20
 
 actions:
   # - name: station_id
-  #   action: station_id
+  #   action: static
   #   lane: duck
   #   every: "15m"
+  #   params: { dir: station_ids, daypart: true, select: random }
 
   - name: short_stories
-    action: short_stories
-    lane: takeover
+    action: static
+    lane: next
     every: "2h"
+    params: { dir: short_stories, select: shuffle }
 
   # - name: news
   #   action: news

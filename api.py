@@ -14,9 +14,9 @@ import liquidsoap
 from playqueue import QueueItem
 
 WEB = Path(__file__).resolve().parent / "web"
-LANES = ("duck", "takeover")
+LANES = ("duck", "takeover", "next")
 CLIP_DIRS = ("generated", "station_ids", "short_stories")
-AUDIO_SUFFIXES = (".wav", ".mp3")
+AUDIO_SUFFIXES = (".wav", ".mp3", ".m4a", ".m4b")
 ICECAST_STATUS = os.environ.get(
     "ICECAST_STATUS_URL",
     f"http://{os.environ.get('ICECAST_HOST', 'localhost')}:8000/status-json.xsl",

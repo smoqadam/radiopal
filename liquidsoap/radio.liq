@@ -2,10 +2,13 @@ settings.server.telnet := true
 settings.server.telnet.bind_addr := "0.0.0.0"
 settings.server.telnet.port := 1234
 
-music = playlist(mode="randomize", reload_mode="watch", "/music")
+music = playlist(id="music", mode="randomize", reload=60, reload_mode="seconds", "/music")
+
+upnext = request.queue(id="next")
+program = fallback(track_sensitive=true, [upnext, music])
 
 duck = request.queue(id="duck")
-bed = smooth_add(p=0.2, duration=1.0, normal=music, special=duck)
+bed = smooth_add(p=0.2, duration=1.0, normal=program, special=duck)
 
 takeover = request.queue(id="takeover")
 

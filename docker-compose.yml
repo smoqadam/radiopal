@@ -45,6 +45,7 @@ services:
       NEWSAPI_KEY: ${NEWSAPI_KEY}
     volumes:
       - ./config.yaml:/app/config.yaml:ro
+      - ./web:/app/web:ro
       - ./creds:/app/creds:ro
 
       - ${STATION_IDS_DIR:-./station_ids}:/app/station_ids:ro
