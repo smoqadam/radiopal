@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RadioPal</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #161922;
+    --line: #262b36;
+    --text: #e6e6e6;
+    --muted: #8a93a6;
+    --accent: #7aa2f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    padding: 48px 16px;
+  }
+  main { width: 100%; max-width: 520px; }
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin: 0 0 4px;
+  }
+  .tagline { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+  .now { font-size: 18px; font-weight: 500; min-height: 24px; }
+  audio { width: 100%; margin-top: 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .row + .row { margin-top: 12px; }
+  select, input[type="datetime-local"] {
+    flex: 1 1 160px;
+    min-width: 0;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-size: 14px;
+  }
+  button {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #0f1115; font-weight: 600; }
+  button.primary:hover { color: #0f1115; opacity: 0.9; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-top: 1px solid var(--line);
+    font-size: 14px;
+  }
+  li:first-child { border-top: 0; }
+  li .when { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .lane { font-size: 11px; color: var(--muted); }
+  .empty { color: var(--muted); font-size: 14px; }
+  .status { color: var(--muted); font-size: 13px; min-height: 18px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>RadioPal</h1>
+  <div class="tagline">your station, your way</div>
+
+  <div class="card">
+    <div class="label">Now playing</div>
+    <div class="now" id="now">&mdash;</div>
+    <audio id="player" controls preload="none"></audio>
+    <div class="row" style="margin-top:14px">
+      <button id="skip">Skip current</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">Play a clip</div>
+    <div class="row">
+      <select id="clip"></select>
+      <select id="lane">
+        <option value="takeover">takeover</option>
+        <option value="duck">duck</option>
+      </select>
+    </div>
+    <div class="row">
+      <button class="primary" id="playNow">Play now</button>
+      <input type="datetime-local" id="when">
+      <button id="schedule">Schedule</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="card">
+    <div class="label">Upcoming</div>
+    <ul id="queue"><li class="empty">nothing scheduled</li></ul>
+  </div>
+</main>
+
+<script>
+const streamUrl = `http://${location.hostname}:8000/radio.mp3`;
+const player = document.getElementById("player");
+player.src = streamUrl;
+
+const $ = (id) => document.getElementById(id);
+const status = $("status");
+
+function setStatus(msg) { status.textContent = msg; }
+
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || res.statusText);
+  }
+  return res.json();
+}
+
+async function refreshNow() {
+  try {
+    const data = await api("/api/now-playing");
+    $("now").textContent = data.title || "—";
+  } catch { /* leave as is */ }
+}
+
+async function refreshQueue() {
+  try {
+    const items = await api("/api/queue");
+    const ul = $("queue");
+    if (!items.length) {
+      ul.innerHTML = '<li class="empty">nothing scheduled</li>';
+      return;
+    }
+    ul.innerHTML = items.map((i) => `
+      <li>
+        <span>${i.clip} <span class="lane">${i.lane}</span></span>
+        <span class="when">${i.play_at.replace("T", " ")}</span>
+      </li>`).join("");
+  } catch { /* ignore */ }
+}
+
+async function loadClips() {
+  try {
+    const clips = await api("/api/clips");
+    const sel = $("clip");
+    sel.innerHTML = clips.length
+      ? clips.map((c) => `<option value="${c}">${c}</option>`).join("")
+      : '<option value="">no clips found</option>';
+  } catch { /* ignore */ }
+}
+
+$("skip").onclick = async () => {
+  setStatus("skipping...");
+  try { await api("/api/skip", { method: "POST" }); setStatus("skipped"); refreshNow(); }
+  catch (e) { setStatus("error: " + e.message); }
+};
+
+function body() {
+  return { path: $("clip").value, lane: $("lane").value };
+}
+
+$("playNow").onclick = async () => {
+  setStatus("pushing...");
+  try {
+    await api("/api/push", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body()),
+    });
+    setStatus("pushed");
+  } catch (e) { setStatus("error: " + e.message); }
+};
+
+$("schedule").onclick = async () => {
+  const when = $("when").value;
+  if (!when) { setStatus("pick a time first"); return; }
+  setStatus("scheduling...");
+  try {
+    const res = await api("/api/schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...body(), play_at: when }),
+    });
+    setStatus("scheduled for " + res.play_at.replace("T", " "));
+    refreshQueue();
+  } catch (e) { setStatus("error: " + e.message); }
+};
+
+loadClips();
+refreshNow();
+refreshQueue();
+setInterval(refreshNow, 5000);
+setInterval(refreshQueue, 10000);
+</script>
+</body>
+</html>

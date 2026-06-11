@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -16,18 +17,26 @@ class QueueItem:
 class PlayQueue:
     def __init__(self):
         self._items = []
+        self._lock = threading.Lock()
 
     def add(self, item):
-        self._items.append(item)
+        with self._lock:
+            self._items.append(item)
 
     def due(self, now):
-        ready = sorted(
-            (i for i in self._items if i.play_at <= now),
-            key=lambda i: i.play_at,
-        )
-        for item in ready:
-            self._items.remove(item)
-        return ready
+        with self._lock:
+            ready = sorted(
+                (i for i in self._items if i.play_at <= now),
+                key=lambda i: i.play_at,
+            )
+            for item in ready:
+                self._items.remove(item)
+            return ready
+
+    def snapshot(self):
+        with self._lock:
+            return sorted(self._items, key=lambda i: i.play_at)
 
     def __len__(self):
-        return len(self._items)
+        with self._lock:
+            return len(self._items)

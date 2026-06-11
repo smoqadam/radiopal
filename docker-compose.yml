@@ -32,8 +32,11 @@ services:
     container_name: radiopal-scheduler
     depends_on:
       - liquidsoap
+    ports:
+      - "8080:8080"          # web UI + control API
     environment:
       LIQUIDSOAP_HOST: liquidsoap
+      ICECAST_HOST: icecast
       GOOGLE_APPLICATION_CREDENTIALS: /app/creds/radiopal-tts.json
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       NEWSAPI_KEY: ${NEWSAPI_KEY}
