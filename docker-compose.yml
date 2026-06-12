@@ -44,5 +44,5 @@ services:
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - ./creds:/app/creds:ro
-      - ${MEDIA_DIR:}:/app/media
+      - ${MEDIA_DIR}:/app/media
     restart: unless-stopped

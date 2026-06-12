@@ -2,4 +2,4 @@ services:
   scheduler:
     build: .
     volumes:
-      - ./web:/app/web:ro
+      - ./app/web:/app/web:ro
