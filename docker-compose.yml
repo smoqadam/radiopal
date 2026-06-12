@@ -23,15 +23,13 @@ services:
       ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD}
     volumes:
       - ./liquidsoap/radio.liq:/radio.liq:ro
-      - ${MUSIC_DIR:-./music}:/music:ro
-      - ${STATION_IDS_DIR:-./station_ids}:/station_ids:ro
-      - ${GENERATED_DIR:-./generated}:/generated:ro
-      - ${SHORT_STORIES_DIR:-./short_stories}:/short_stories:ro
+      - ${MUSIC_DIR}:/music:ro
+      - ${MEDIA_DIR}:/media:ro
     command: ["liquidsoap", "/radio.liq"]
     restart: unless-stopped
 
   scheduler:
-    build: .
+    image: ghcr.io/smoqadam/radiopal:${IMAGE_TAG:-latest}
     container_name: radiopal-scheduler
     depends_on:
       - liquidsoap
@@ -45,11 +43,6 @@ services:
       NEWSAPI_KEY: ${NEWSAPI_KEY}
     volumes:
       - ./config.yaml:/app/config.yaml:ro
-      - ./web:/app/web:ro
       - ./creds:/app/creds:ro
-
-      - ${STATION_IDS_DIR:-./station_ids}:/app/station_ids:ro
-      - ${GENERATED_DIR:-./generated}:/app/generated
-      - ${SHORT_STORIES_DIR:-./short_stories}:/app/short_stories
-
+      - ${MEDIA_DIR:}:/app/media
     restart: unless-stopped

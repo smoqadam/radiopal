@@ -5,7 +5,7 @@ import pathlib
 from google.cloud import texttospeech
 
 HERE = pathlib.Path(__file__).resolve().parent
-GENERATED_DIR = HERE / "generated"
+GENERATED_DIR = HERE / "media" / "generated"
 
 DEFAULT_VOICE = "en-US-Chirp3-HD-Charon"
 DEFAULT_LANG = "en-US"

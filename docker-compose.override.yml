@@ -1,0 +1,5 @@
+services:
+  scheduler:
+    build: .
+    volumes:
+      - ./web:/app/web:ro

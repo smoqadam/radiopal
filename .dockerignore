@@ -1,9 +1,11 @@
 .venv
+.env
+*.env
 creds
-generated
-station_ids
+media
 music
 __pycache__
 *.pyc
 .git
 *.md
+docker-compose*.yml

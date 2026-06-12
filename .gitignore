@@ -12,7 +12,5 @@ __pycache__/
 
 # audio content (not code) — keep the repo light
 music/
-generated/
-station_ids/
-short_stories/
+media/
 .DS_Store

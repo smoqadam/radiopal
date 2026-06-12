@@ -14,6 +14,7 @@ import liquidsoap
 from playqueue import QueueItem
 
 WEB = Path(__file__).resolve().parent / "web"
+MEDIA = liquidsoap.ROOT / "media"
 LANES = ("duck", "takeover", "next")
 CLIP_DIRS = ("generated", "station_ids", "short_stories")
 AUDIO_SUFFIXES = (".wav", ".mp3", ".m4a", ".m4b")
@@ -82,7 +83,7 @@ def create_app(queue):
     def clips():
         out = []
         for name in CLIP_DIRS:
-            base = liquidsoap.ROOT / name
+            base = MEDIA / name
             if not base.exists():
                 continue
             for p in sorted(base.rglob("*")):

@@ -7,7 +7,7 @@ import random
 from actions.base import Action
 from playqueue import QueueItem
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
+ROOT = pathlib.Path(__file__).resolve().parent.parent / "media"
 AUDIO = (".wav", ".mp3", ".m4a", ".m4b")
 
 
