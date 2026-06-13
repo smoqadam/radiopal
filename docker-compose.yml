@@ -23,8 +23,10 @@ services:
       ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD}
     volumes:
       - ./liquidsoap/radio.liq:/radio.liq:ro
-      - ${MUSIC_DIR}:/music:ro
-      - ${MEDIA_DIR}:/media:ro
+
+
+      - ${MUSIC_DIR:-/music}:/music:ro
+      - ${MEDIA_DIR:-/media}:/media:ro
     command: ["liquidsoap", "/radio.liq"]
     restart: unless-stopped
 
@@ -44,5 +46,5 @@ services:
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - ./creds:/app/creds:ro
-      - ${MEDIA_DIR}:/app/media
+      - ${MEDIA_DIR:-/media}:/app/media
     restart: unless-stopped
