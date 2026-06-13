@@ -17,7 +17,6 @@ WEB = Path(__file__).resolve().parent / "web"
 MEDIA = liquidsoap.ROOT / "media"
 LANES = ("duck", "takeover", "next")
 CLIP_DIRS = ("generated", "station_ids", "short_stories")
-AUDIO_SUFFIXES = (".wav", ".mp3", ".m4a", ".m4b")
 ICECAST_STATUS = os.environ.get(
     "ICECAST_STATUS_URL",
     f"http://{os.environ.get('ICECAST_HOST', 'localhost')}:8000/status-json.xsl",
@@ -87,7 +86,7 @@ def create_app(queue):
             if not base.exists():
                 continue
             for p in sorted(base.rglob("*")):
-                if p.suffix.lower() in AUDIO_SUFFIXES:
+                if p.suffix.lower() in liquidsoap.AUDIO_SUFFIXES:
                     out.append(str(p.relative_to(liquidsoap.ROOT)))
         return out
 

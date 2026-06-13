@@ -4,11 +4,11 @@ import json
 import pathlib
 import random
 
+import liquidsoap
 from actions.base import Action
 from playqueue import QueueItem
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent / "media"
-AUDIO = (".wav", ".mp3", ".m4a", ".m4b")
 
 
 def _daypart(hour):
@@ -27,7 +27,9 @@ class StaticAction(Action):
     def prepare(self, play_at):
         root = ROOT / self.params["dir"]
         pool = root / _daypart(play_at.hour) if self.params.get("daypart") else root
-        files = sorted(p for p in pool.glob("*") if p.suffix.lower() in AUDIO)
+        files = sorted(
+            p for p in pool.rglob("*") if p.suffix.lower() in liquidsoap.AUDIO_SUFFIXES
+        )
         if not files:
             raise FileNotFoundError(f"no audio in {pool}")
         select = self.params.get("select", "random")
@@ -44,6 +46,9 @@ class StaticAction(Action):
     def _state(self, root):
         return root / f".{self.name}.json"
 
+    def _key(self, root, p):
+        return str(p.relative_to(root))
+
     def _shuffle(self, root, files):
         state = self._state(root)
         played = set()
@@ -51,12 +56,12 @@ class StaticAction(Action):
             data = json.loads(state.read_text())
             if isinstance(data, list):
                 played = set(data)
-        remaining = [p for p in files if p.name not in played]
+        remaining = [p for p in files if self._key(root, p) not in played]
         if not remaining:
             played = set()
             remaining = files
         chosen = random.choice(remaining)
-        played.add(chosen.name)
+        played.add(self._key(root, chosen))
         state.write_text(json.dumps(sorted(played)))
         return chosen
 
@@ -67,8 +72,8 @@ class StaticAction(Action):
             data = json.loads(state.read_text())
             if isinstance(data, dict):
                 last = data.get("last")
-        names = [p.name for p in files]
-        idx = (names.index(last) + 1) % len(files) if last in names else 0
+        keys = [self._key(root, p) for p in files]
+        idx = (keys.index(last) + 1) % len(files) if last in keys else 0
         chosen = files[idx]
-        state.write_text(json.dumps({"last": chosen.name}))
+        state.write_text(json.dumps({"last": self._key(root, chosen)}))
         return chosen
