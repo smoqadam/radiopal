@@ -6,6 +6,7 @@ schedules:
   - name: short_stories
     action: static
     lane: duck
+    every: "2h"
     params: { dir: short_stories, select: shuffle }
 
 
