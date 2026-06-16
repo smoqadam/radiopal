@@ -2,8 +2,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Formatter};
 use std::{fmt, fs};
+use crate::schedule::{ScheduleError, ScheduledEntry};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum Lane {
     #[serde(rename = "next")]
     Next,
@@ -19,10 +20,10 @@ pub enum Lane {
 pub struct Config {
     pub lead_seconds: Option<u32>,
     pub tick_seconds: Option<u64>,
-    pub schedules: Vec<ScheduleConfig>,
+    schedules: Vec<ScheduleConfig>,
 }
 pub type ScheduleConfigParams = HashMap<String, String>;
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ScheduleConfig {
     pub name: String,
     pub action: String,
@@ -71,6 +72,17 @@ impl Config {
         let cfg = Self::parse(&yml)?;
         cfg.validate()?;
         Ok(cfg)
+    }
+
+
+
+    pub fn schedules(&self) -> Result<Vec<ScheduledEntry>, ScheduleError> {
+        let mut vsc = vec![];
+        for sc in &self.schedules {
+            vsc.push(ScheduledEntry::new(sc.clone())?);
+        }
+
+        Ok(vsc)
     }
 
     fn parse(yml: &str) -> Result<Config, ConfigError> {

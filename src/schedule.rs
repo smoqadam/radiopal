@@ -1,4 +1,4 @@
-use crate::config::ScheduleConfig;
+use crate::config::{ScheduleConfig};
 use crate::schedule::ScheduleError::{BadEvery, BadTime, Both, Empty};
 use chrono::prelude::*;
 use chrono::{DateTime, Duration, Utc};
@@ -6,7 +6,7 @@ use std::error::Error;
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug, PartialEq)]
-enum Schedule {
+enum    Schedule {
     At(NaiveTime),
     Every(Duration),
 }
@@ -19,7 +19,7 @@ impl Schedule {
             (None, None) => Err(Empty),
 
             (None, Some(t)) => {
-                if t.len() == 0 {
+                if t.is_empty() {
                     return Err(BadTime("time is empty".to_string()));
                 }
                 let nt = NaiveTime::parse_from_str(t, "%H:%M")
@@ -36,7 +36,7 @@ impl Schedule {
 }
 
 fn parse_every(s: &str) -> Result<Duration, ScheduleError> {
-    if s.len() == 0 {
+    if s.is_empty() {
         return Err(Empty);
     }
     let s = s.trim();
@@ -54,8 +54,8 @@ fn parse_every(s: &str) -> Result<Duration, ScheduleError> {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct ScheduledEntry<'a> {
-    config: &'a ScheduleConfig,
+pub struct ScheduledEntry {
+    config: ScheduleConfig,
     schedule: Schedule,
     played_at: Option<DateTime<Utc>>,
 }
@@ -84,8 +84,8 @@ impl Display for ScheduleError {
 
 impl Error for ScheduleError {}
 
-impl<'a> ScheduledEntry<'a> {
-    pub fn new(config: &'a ScheduleConfig) -> Result<Self, ScheduleError> {
+impl ScheduledEntry {
+    pub fn new(config: ScheduleConfig) -> Result<Self, ScheduleError> {
         let sc: Schedule = Schedule::from_config(&config)?;
 
         Ok(ScheduledEntry {
@@ -135,8 +135,8 @@ mod tests {
 
 
         for case in cases {
-            let c = &cfg(case.0.clone(), case.1.clone());
-            let se = ScheduledEntry::new(&c).unwrap();
+            let c = cfg(case.0.clone(), case.1.clone());
+            let se = ScheduledEntry::new(c.clone()).unwrap();
             assert_eq!(se.schedule, case.2, "input = {c:?}");
         }
     }
@@ -164,8 +164,8 @@ mod tests {
 
 
         for case in cases {
-            let c = &cfg(case.0.clone(), case.1.clone());
-            let se = ScheduledEntry::new(&c).err().unwrap();
+            let c = cfg(case.0.clone(), case.1.clone());
+            let se = ScheduledEntry::new(c).err().unwrap();
             assert_eq!(se, case.2, "input = {case:?}");
         }
     }
