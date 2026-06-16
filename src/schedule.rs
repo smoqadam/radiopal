@@ -1,4 +1,3 @@
-use crate::config;
 use crate::config::ScheduleConfig;
 use crate::schedule::ScheduleError::{BadEvery, BadTime, Both, Empty};
 use chrono::prelude::*;

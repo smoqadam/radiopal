@@ -5,7 +5,7 @@ use std::time::Duration;
 use chrono::Utc;
 use tokio::{time};
 use crate::config::Config;
-use crate::schedule::{ScheduleError, ScheduledEntry};
+use crate::schedule::{ScheduledEntry};
 const DEFAULT_TICK_SEC: u64 = 20;
 
 
