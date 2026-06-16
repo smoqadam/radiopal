@@ -7,3 +7,5 @@ edition = "2024"
 tokio = { version = "1", features = ["full"] }
 noyalib = "0.0.7"
 serde = { version = "1.0.228", features = ["derive"] }
+chrono = "0.4.45"
+anyhow = "1.0.102"

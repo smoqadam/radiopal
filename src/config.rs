@@ -4,7 +4,7 @@ use std::fmt::{Error, Formatter, Write};
 use std::{fmt, fs};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
-enum Lane {
+pub enum Lane {
     #[serde(rename = "next")]
     Next,
 
@@ -17,18 +17,20 @@ enum Lane {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Config {
-    lead_seconds: Option<u32>,
-    schedules: Vec<ScheduleConfig>,
+    pub lead_seconds: Option<u32>,
+    pub tick_seconds: Option<u64>,
+    pub schedules: Vec<ScheduleConfig>,
 }
 pub type ScheduleConfigParams = HashMap<String, String>;
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct ScheduleConfig {
-    name: String,
-    action: String,
-    lane: Lane,
-    every: Option<String>,
-    time: Option<String>,
-    params: ScheduleConfigParams,
+    pub name: String,
+    pub action: String,
+    pub lane: Lane,
+    pub lead: Option<i32>,
+    pub every: Option<String>,
+    pub time: Option<String>,
+    pub params: ScheduleConfigParams,
 }
 
 #[derive(Debug, PartialEq)]
@@ -91,6 +93,10 @@ impl Config {
                 ));
             }
 
+            if action.every.is_some() && action.time.is_some() {
+                errs.push(format!("schedule {} cannot have both 'every' and 'time'", action.name));
+            }
+
             if actions.contains(&name) {
                 errs.push(format!("the name {} already exists", &name));
             }
@@ -114,10 +120,11 @@ mod tests {
     fn test_valid_config() {
         let yml_str = r"
 lead_seconds: 30
-
+tick_seconds: 10
 schedules:
   - name: short_stories
     action: static
+    lead: 20
     lane: duck
     every: '2h'
     params: { dir: short_stories, select: shuffle }
@@ -128,13 +135,15 @@ schedules:
         params.insert("select".to_string(), "shuffle".to_string());
         let expected = Config {
             lead_seconds: Some(30),
+            tick_seconds: Some(10),
             schedules: vec![ScheduleConfig {
                 name: "short_stories".to_string(),
                 action: "static".to_string(),
+                lead: Some(20),
                 lane: Lane::Duck,
                 every: Some("2h".to_string()),
                 time: None,
-                params: params,
+                params,
             }],
         };
         let cfg = Config::parse(yml_str).unwrap();
@@ -144,7 +153,7 @@ schedules:
     #[test]
     fn test_validation_err() {
         let yml_str = r"
-lead: 30
+lead_seconds: 30
 
 schedules:
   - name: short_stories
