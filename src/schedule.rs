@@ -1,12 +1,12 @@
 use crate::config::{ScheduleConfig};
 use crate::schedule::ScheduleError::{BadEvery, BadTime, Both, Empty};
 use chrono::prelude::*;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug, PartialEq)]
-enum    Schedule {
+enum Schedule {
     At(NaiveTime),
     Every(Duration),
 }
@@ -55,9 +55,18 @@ fn parse_every(s: &str) -> Result<Duration, ScheduleError> {
 
 #[derive(Debug, PartialEq)]
 pub struct ScheduledEntry {
-    config: ScheduleConfig,
-    schedule: Schedule,
-    played_at: Option<DateTime<Utc>>,
+    pub config: ScheduleConfig,
+    pub schedule: Schedule,
+    pub last_fired: Option<DateTime<Local>>,
+    pub played_at: Option<DateTime<Local>>,
+    pub stage: Stage,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Stage {
+    Idle,
+    Preparing (DateTime<Local>),
+    Ready(DateTime<Local>, String),
 }
 
 #[derive(Debug, PartialEq)]
@@ -89,20 +98,29 @@ impl ScheduledEntry {
         let sc: Schedule = Schedule::from_config(&config)?;
 
         Ok(ScheduledEntry {
+            last_fired: None,
+            stage: Stage::Idle,
             config,
             schedule: sc,
             played_at: None,
         })
     }
 
-    pub fn is_due(&self, now: DateTime<Utc>) -> bool {
-        let lead = Duration::seconds(self.config.lead.unwrap_or(0) as i64);
-
+    pub fn due(&self, now: DateTime<Local>) -> DateTime<Local> {
         let slot = match &self.schedule {
-            Schedule::At(t) => now.date_naive().and_time(*t).and_utc(),
+            Schedule::At(t) => {
+                now
+                    .date_naive()
+                    .and_time(*t)
+
+            }
             Schedule::Every(d) => {
-                let midnight = now.date_naive().and_hms_opt(0, 0, 0).unwrap().and_utc();
-                let elapsed = now - midnight;
+                let midnight = now
+                    .date_naive()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap();
+
+                let elapsed = now.time() - midnight.time();
                 let step = d.num_seconds();
 
                 let n = (elapsed.num_seconds() + step - 1) / step; // ceil
@@ -110,8 +128,7 @@ impl ScheduledEntry {
                 midnight + *d * (n as i32)
             }
         };
-
-        now >= slot - lead && now <= slot
+        slot.and_local_timezone(Local).unwrap()
     }
 }
 
@@ -122,12 +139,10 @@ mod tests {
 
     #[test]
     fn test_valid() {
-
         let cases: &[(Option<String>, Option<String>, Schedule)] = &[
             (Some("22:00".to_string()), None, Schedule::At(NaiveTime::from_hms_opt(22, 0, 0).unwrap())),
             (Some("2:00".to_string()), None, Schedule::At(NaiveTime::from_hms_opt(2, 0, 0).unwrap())),
             (Some("10:00".to_string()), None, Schedule::At(NaiveTime::from_hms_opt(10, 0, 0).unwrap())),
-
             (None, Some("3h".to_string()), Schedule::Every(Duration::hours(3))),
             (None, Some("10m".to_string()), Schedule::Every(Duration::minutes(10))),
             (None, Some("10s".to_string()), Schedule::Every(Duration::seconds(10))),
@@ -144,17 +159,13 @@ mod tests {
 
     #[test]
     fn test_invalid() {
-
         let cases: &[(Option<String>, Option<String>, ScheduleError)] = &[
             (None, None, Empty),
             (Some("2:00".to_string()), Some("22:00".to_string()), Both),
-
             (Some("1".to_string()), None, BadTime("bad time: 1".to_string())),
             (Some("kjh".to_string()), None, BadTime("bad time: kjh".to_string())),
             (Some("200".to_string()), None, BadTime("bad time: 200".to_string())),
             (Some("10:00h".to_string()), None, BadTime("bad time: 10:00h".to_string())),
-
-
             (None, Some("22:00".to_string()), BadEvery("22:00".to_string())),
             (None, Some("2e".to_string()), BadEvery("2e".to_string())),
             (None, Some("22H".to_string()), BadEvery("22H".to_string())),
