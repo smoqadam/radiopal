@@ -3,7 +3,7 @@ services:
     image: moul/icecast
     container_name: radiopal-icecast
     ports:
-      - "8000:8000"
+      - "8003:8000"
     environment:
       - ICECAST_SOURCE_PASSWORD=hackme
       - ICECAST_ADMIN_PASSWORD=hackme
@@ -15,35 +15,53 @@ services:
   liquidsoap:
     image: savonet/liquidsoap:v2.2.5
     container_name: radiopal-liquidsoap
-    command: /config/radio.liq
+    command: /app/config/radio.liq
     working_dir: /app
     depends_on:
       - icecast
     ports:
       - "1234:1234"
     volumes:
-      - ./config/radio.liq:/config/radio.liq:ro
-      - ./music:/app/music
-      - ./media:/app/media
-      - ./short_stories:/app/short_stories
+      - ${CONFIG_DIR}:/app/config:ro
+      - ${CONTENT_DIR}:/app/content
     restart: unless-stopped
-
+  vpn:
+    hostname: arr.local
+    container_name: vpn
+    image: qmcgaw/gluetun
+    restart: always
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    labels:
+      - autoheal=true
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    ports:
+      - "8112:8112"
+    environment:
+      - TZ=${TZ}
+      - VPN_SERVICE_PROVIDER=protonvpn
+      - VPN_TYPE=openvpn
+      - VPN_PORT_FORWARDING=on
+      - OPENVPN_USER=${OPENVPN_USER}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
   scheduler:
-    image: ${RADIOPAL_IMAGE:-radiopal-rs:latest}
+    image: ghcr.io/smoqadam/radiopal:latest
     build: .
     container_name: radiopal-scheduler
     working_dir: /app
+    network_mode: service:vpn
+
     depends_on:
       - liquidsoap
       - icecast
     environment:
-      - RADIOPAL_CONFIG=/config/config.yaml
-      - RADIOPAL_STATE_FILE=/data/selector_state.json
+      - RADIOPAL_CONFIG=/app/config/config.yaml
+      - RADIOPAL_STATE_FILE=/app/content/data/selector_state.json
       - RADIOPAL_LIQUIDSOAP_ADDR=liquidsoap:1234
     volumes:
-      - ./config:/config:ro
-      - ./music:/app/music
-      - ./media:/app/media
-      - ./short_stories:/app/short_stories
-      - ./data:/data
+      - ${CONFIG_DIR}:/app/config:ro
+      - ${CONTENT_DIR}:/app/content
     restart: unless-stopped

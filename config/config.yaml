@@ -1,35 +1,81 @@
-lead_seconds: 300
-tick_seconds: 2
+tick_seconds: 10
 liquidsoap_addr: "127.0.0.1:1234"
 
 
 schedules:
-  - name: short_stories
+
+  - name: calm
     lane: next
-    lead: 3
-    every: "1m"
-#    time: "10:0"
-    select: random
-    action:
-      type: static
-      dir: short_stories
-
-
-  - name: testtesttest
-    lane: takeover
-    lead: 10
-    every: "30s"
+    lead: 300
+    time: "06:00"
     select: shuffle
     action:
-      type: static
-      dir: short_stories
+      type: youtube
+      url: "https://www.youtube.com/channel/UChSpME3QaSFAWK8Hpmg-Dyw"
+      cache: content/media/cache
 
-#  - name: my_channel
-#    lane: duck
-#    lead: 120
-#    every: "30m"
-#    select: shuffle
-#    action:
-#      type: youtube
-#      url: "https://www.youtube.com/@SomeChannel"
-#      cache: media/cache
+
+  - name: coffee_break_german
+    lane: next
+    lead: 300
+    time: "08:00"
+    select: sequential
+    action:
+      type: youtube
+      url: "https://www.youtube.com/@coffeebreakgerman"
+      cache: content/media/cache
+
+
+  - name: history_of_philosophy
+    lane: next
+    lead: 300
+    time: "10:00"
+    select: sequential
+    action:
+      type: youtube
+      url: "https://www.youtube.com/playlist?list=PL713WgO1oJMSVClLqywLoEHuPp0x5itfU"
+      cache: content/media/cache
+
+
+  - name: ketab_baz
+    lane: next
+    lead: 300
+    time: "12:00"
+    select: shuffle
+    action:
+      type: youtube
+      url: "https://www.youtube.com/channel/UC5HP2dpYw4Lbaxpc6bJ1jMQ"
+      cache: content/media/cache
+
+
+  - name: great_courses
+    lane: next
+    lead: 300
+    time: "14:00"
+    select: shuffle
+    action:
+      type: youtube
+      url: "https://www.youtube.com/@TheGreatCourses"
+      cache: content/media/cache
+
+
+  - name: closer_to_truth
+    lane: next
+    lead: 300
+    time: "18:00"
+    select: shuffle
+    action:
+      type: youtube
+      url: "https://www.youtube.com/@CloserToTruthTV"
+      cache: content/media/cache
+
+
+  - name: funniest_comedy
+    lane: next
+    lead: 300
+    time: "21:00"
+    select: random
+    action:
+      type: youtube
+      url: "https://www.youtube.com/@funniestevercomedy"
+      cache: content/media/cache
