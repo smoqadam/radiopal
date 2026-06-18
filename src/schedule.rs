@@ -112,10 +112,12 @@ impl ScheduledEntry {
     pub fn due(&self, now: DateTime<Local>) -> DateTime<Local> {
         let slot = match &self.schedule {
             Schedule::At(t) => {
-                now
-                    .date_naive()
-                    .and_time(*t)
-
+                let today = now.date_naive().and_time(*t);
+                if today >= now.naive_local() {
+                    today
+                } else {
+                    today + Duration::days(1)
+                }
             }
             Schedule::Every(d) => {
                 let midnight = now
