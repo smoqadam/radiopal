@@ -1,8 +1,9 @@
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fmt::{Formatter};
-use std::{fmt, fs};
+use crate::action::Action;
 use crate::schedule::{ScheduleError, ScheduledEntry};
+use crate::selector::SelectKind;
+use serde::{Deserialize, Serialize};
+use std::fmt::Formatter;
+use std::{fmt, fs};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum Lane {
@@ -20,18 +21,19 @@ pub enum Lane {
 pub struct Config {
     pub lead_seconds: Option<u32>,
     pub tick_seconds: Option<u64>,
+    pub liquidsoap_addr: Option<String>,
     schedules: Vec<ScheduleConfig>,
 }
-pub type ScheduleConfigParams = HashMap<String, String>;
+
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ScheduleConfig {
     pub name: String,
-    pub action: String,
     pub lane: Lane,
     pub lead: Option<i32>,
     pub every: Option<String>,
     pub time: Option<String>,
-    pub params: ScheduleConfigParams,
+    pub select: SelectKind,
+    pub action: Action,
 }
 
 #[derive(Debug, PartialEq)]
@@ -127,6 +129,7 @@ impl Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::action::StaticConfig;
 
     #[test]
     fn test_valid_config() {
@@ -135,27 +138,29 @@ lead_seconds: 30
 tick_seconds: 10
 schedules:
   - name: short_stories
-    action: static
     lead: 20
     lane: duck
     every: '2h'
-    params: { dir: short_stories, select: shuffle }
+    select: shuffle
+    action:
+      type: static
+      dir: short_stories
 
         ";
-        let mut params = HashMap::new();
-        params.insert("dir".to_string(), "short_stories".to_string());
-        params.insert("select".to_string(), "shuffle".to_string());
         let expected = Config {
             lead_seconds: Some(30),
             tick_seconds: Some(10),
+            liquidsoap_addr: None,
             schedules: vec![ScheduleConfig {
                 name: "short_stories".to_string(),
-                action: "static".to_string(),
                 lead: Some(20),
                 lane: Lane::Duck,
                 every: Some("2h".to_string()),
                 time: None,
-                params,
+                select: SelectKind::Shuffle,
+                action: Action::Static(StaticConfig {
+                    dir: "short_stories".to_string(),
+                }),
             }],
         };
         let cfg = Config::parse(yml_str).unwrap();
@@ -169,12 +174,28 @@ lead_seconds: 30
 
 schedules:
   - name: short_stories
-    action: static
     lane: duck
-    params: { dir: short_stories, select: shuffle }
+    select: random
+    action:
+      type: static
+      dir: short_stories
         ";
         let cfg = Config::parse(yml_str).unwrap();
 
         matches!(cfg.validate().unwrap_err(), ConfigError::Validation(_));
+    }
+
+    #[test]
+    fn test_invalid_action_fails_at_parse() {
+        let yml_str = r"
+schedules:
+  - name: short_stories
+    lane: duck
+    every: '2h'
+    select: random
+    action:
+      type: bogus
+        ";
+        matches!(Config::parse(yml_str).unwrap_err(), ConfigError::InvalidFormat(_));
     }
 }

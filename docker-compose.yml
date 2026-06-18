@@ -1,0 +1,27 @@
+services:
+  icecast:
+    image: moul/icecast
+    container_name: radiopal-icecast
+    ports:
+      - "8000:8000"
+    environment:
+      - ICECAST_SOURCE_PASSWORD=hackme
+      - ICECAST_ADMIN_PASSWORD=hackme
+      - ICECAST_PASSWORD=hackme
+      - ICECAST_RELAY_PASSWORD=hackme
+      - ICECAST_HOSTNAME=localhost
+    restart: unless-stopped
+
+  liquidsoap:
+    image: savonet/liquidsoap:v2.2.5
+    container_name: radiopal-liquidsoap
+    command: /radio.liq
+    depends_on:
+      - icecast
+    ports:
+      - "1234:1234"
+    working_dir: "${PWD}"
+    volumes:
+      - ./liquidsoap/radio.liq:/radio.liq:ro
+      - "${PWD}:${PWD}"
+    restart: unless-stopped

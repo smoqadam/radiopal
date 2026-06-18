@@ -1,12 +1,14 @@
-use crate::config::{ScheduleConfig};
+use crate::config::ScheduleConfig;
 use crate::schedule::ScheduleError::{BadEvery, BadTime, Both, Empty};
+use crate::selector::Selector;
 use chrono::prelude::*;
 use chrono::{DateTime, Duration};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+use std::path::PathBuf;
 
 #[derive(Debug, PartialEq)]
-enum Schedule {
+pub enum Schedule {
     At(NaiveTime),
     Every(Duration),
 }
@@ -58,15 +60,15 @@ pub struct ScheduledEntry {
     pub config: ScheduleConfig,
     pub schedule: Schedule,
     pub last_fired: Option<DateTime<Local>>,
-    pub played_at: Option<DateTime<Local>>,
     pub stage: Stage,
+    pub selector: Selector,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Stage {
     Idle,
     Preparing (DateTime<Local>),
-    Ready(DateTime<Local>, String),
+    Ready(DateTime<Local>, PathBuf),
 }
 
 #[derive(Debug, PartialEq)]
@@ -96,13 +98,14 @@ impl Error for ScheduleError {}
 impl ScheduledEntry {
     pub fn new(config: ScheduleConfig) -> Result<Self, ScheduleError> {
         let sc: Schedule = Schedule::from_config(&config)?;
+        let selector = Selector::from_kind(config.select);
 
         Ok(ScheduledEntry {
             last_fired: None,
             stage: Stage::Idle,
+            selector,
             config,
             schedule: sc,
-            played_at: None,
         })
     }
 
@@ -135,7 +138,9 @@ impl ScheduledEntry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::{Lane};
+    use crate::action::{Action, StaticConfig};
+    use crate::config::Lane;
+    use crate::selector::SelectKind;
 
     #[test]
     fn test_valid() {
@@ -185,12 +190,14 @@ mod tests {
     fn cfg(time: Option<String>, every: Option<String>) -> ScheduleConfig {
         ScheduleConfig {
             name: "".to_string(),
-            action: "".to_string(),
             lane: Lane::Next,
             lead: None,
             every,
             time,
-            params: Default::default(),
+            select: SelectKind::Random,
+            action: Action::Static(StaticConfig {
+                dir: "".to_string(),
+            }),
         }
     }
 }
