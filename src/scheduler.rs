@@ -29,11 +29,13 @@ struct PrepareResult {
 impl Scheduler {
     pub async fn run(config: &Config) -> anyhow::Result<()> {
         let tick_sec = config.tick_seconds.unwrap_or(DEFAULT_TICK_SEC);
-        let liq_addr = config
-            .liquidsoap_addr
-            .clone()
+        let liq_addr = std::env::var("RADIOPAL_LIQUIDSOAP_ADDR")
+            .ok()
+            .or_else(|| config.liquidsoap_addr.clone())
             .unwrap_or_else(|| DEFAULT_LIQUIDSOAP_ADDR.to_string());
-        let store = SelectorStore::new(DEFAULT_STATE_FILE);
+        let state_file =
+            std::env::var("RADIOPAL_STATE_FILE").unwrap_or_else(|_| DEFAULT_STATE_FILE.to_string());
+        let store = SelectorStore::new(state_file);
 
         let mut schedules = config.schedules()?;
         let saved = store.load();

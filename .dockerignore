@@ -1,0 +1,13 @@
+target
+.git
+.github
+docker-compose.yml
+Dockerfile
+.dockerignore
+config
+music
+media
+short_stories
+data
+selector_state.json
+*.md

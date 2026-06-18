@@ -15,13 +15,35 @@ services:
   liquidsoap:
     image: savonet/liquidsoap:v2.2.5
     container_name: radiopal-liquidsoap
-    command: /radio.liq
+    command: /config/radio.liq
+    working_dir: /app
     depends_on:
       - icecast
     ports:
       - "1234:1234"
-    working_dir: "${PWD}"
     volumes:
-      - ./liquidsoap/radio.liq:/radio.liq:ro
-      - "${PWD}:${PWD}"
+      - ./config/radio.liq:/config/radio.liq:ro
+      - ./music:/app/music
+      - ./media:/app/media
+      - ./short_stories:/app/short_stories
+    restart: unless-stopped
+
+  scheduler:
+    image: ${RADIOPAL_IMAGE:-radiopal-rs:latest}
+    build: .
+    container_name: radiopal-scheduler
+    working_dir: /app
+    depends_on:
+      - liquidsoap
+      - icecast
+    environment:
+      - RADIOPAL_CONFIG=/config/config.yaml
+      - RADIOPAL_STATE_FILE=/data/selector_state.json
+      - RADIOPAL_LIQUIDSOAP_ADDR=liquidsoap:1234
+    volumes:
+      - ./config:/config:ro
+      - ./music:/app/music
+      - ./media:/app/media
+      - ./short_stories:/app/short_stories
+      - ./data:/data
     restart: unless-stopped
