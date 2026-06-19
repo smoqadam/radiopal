@@ -59,12 +59,12 @@ mod tests {
             received
         });
 
-        push(&addr, &Lane::Duck, Path::new("/music/one.mp3"))
+        push(&addr, &Lane::Duck, Path::new("/content/music/one.mp3"))
             .await
             .unwrap();
 
         let received = server.await.unwrap();
-        assert!(received.contains("duck.push /music/one.mp3"));
+        assert!(received.contains("duck.push /content/music/one.mp3"));
         assert!(received.contains("quit"));
     }
 }

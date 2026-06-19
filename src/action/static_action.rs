@@ -11,18 +11,26 @@ pub struct StaticConfig {
 
 impl StaticConfig {
     pub(crate) fn candidates(&self) -> anyhow::Result<Vec<Candidate>> {
-        let candidates = std::fs::read_dir(&self.dir)?
-            .filter_map(|e| e.ok())
-            .map(|e| e.path())
-            .filter(|p| p.is_file() && is_audio(p))
-            .map(|p| Candidate::new(p.to_string_lossy().into_owned()))
-            .collect();
+        let mut candidates = Vec::new();
+        collect(Path::new(&self.dir), &mut candidates)?;
         Ok(candidates)
     }
 
     pub(crate) fn materialize(&self, chosen: &Candidate) -> anyhow::Result<PathBuf> {
         Ok(PathBuf::from(&chosen.uri))
     }
+}
+
+fn collect(dir: &Path, out: &mut Vec<Candidate>) -> anyhow::Result<()> {
+    for entry in std::fs::read_dir(dir)? {
+        let path = entry?.path();
+        if path.is_dir() {
+            collect(&path, out)?;
+        } else if path.is_file() && is_audio(&path) {
+            out.push(Candidate::new(path.to_string_lossy().into_owned()));
+        }
+    }
+    Ok(())
 }
 
 fn is_audio(path: &Path) -> bool {
@@ -80,6 +88,32 @@ mod tests {
         assert_eq!(uris.len(), 2);
         assert!(uris[0].ends_with("one.mp3"));
         assert!(uris[1].ends_with("two.wav"));
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn candidates_recurses_subdirectories() {
+        let dir = temp_dir("recurse");
+        let sub = dir.join("sub");
+        std::fs::create_dir_all(&sub).unwrap();
+        std::fs::write(dir.join("top.mp3"), b"").unwrap();
+        std::fs::write(sub.join("nested.mp3"), b"").unwrap();
+        std::fs::write(sub.join("notes.txt"), b"").unwrap();
+
+        let cfg = StaticConfig {
+            dir: dir.to_string_lossy().into_owned(),
+        };
+        let mut uris: Vec<String> = cfg
+            .candidates()
+            .unwrap()
+            .into_iter()
+            .map(|c| c.uri)
+            .collect();
+        uris.sort();
+
+        assert_eq!(uris.len(), 2);
+        assert!(uris[0].ends_with("nested.mp3"));
+        assert!(uris[1].ends_with("top.mp3"));
         std::fs::remove_dir_all(&dir).unwrap();
     }
 

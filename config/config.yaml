@@ -7,7 +7,7 @@ schedules:
   - name: calm
     lane: next
     lead: 300
-    time: "06:00"
+    time: "07:00"
     select: shuffle
     action:
       type: youtube
@@ -18,7 +18,7 @@ schedules:
   - name: coffee_break_german
     lane: next
     lead: 300
-    time: "08:00"
+    time: "17:00"
     select: sequential
     action:
       type: youtube
@@ -79,3 +79,53 @@ schedules:
       type: youtube
       url: "https://www.youtube.com/@funniestevercomedy"
       cache: content/media/cache
+
+
+  - name: hafez
+    lane: next
+    lead: 60
+    time: "15:00"
+    select: shuffle
+    action:
+      type: static
+      dir: content/radio/Hafez
+
+
+  - name: blinkist
+    lane: next
+    lead: 60
+    time: "10:00"
+    select: sequential
+    action:
+      type: static
+      dir: content/radio/blinkist
+
+
+  - name: fa_stories
+    lane: next
+    lead: 60
+    time: "16:00"
+    select: shuffle
+    action:
+      type: static
+      dir: content/radio/fa_stories
+
+
+  - name: poetry
+    lane: next
+    lead: 60
+    time: "19:00"
+    select: shuffle
+    action:
+      type: static
+      dir: content/radio/poetry
+
+
+  - name: short_stories
+    lane: next
+    lead: 60
+    time: "20:00"
+    select: sequential
+    action:
+      type: static
+      dir: content/radio/short_stories

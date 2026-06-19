@@ -3,7 +3,7 @@
 /.idea
 
 selector_state.json
-media
-music
-short_stories/
-data/
+content/media
+content/music
+content/short_stories/
+content/data/
