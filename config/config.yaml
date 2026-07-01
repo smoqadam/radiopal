@@ -7,7 +7,7 @@ schedules:
   - name: calm
     lane: next
     lead: 300
-    time: "07:00"
+    every: "7h"
     select: shuffle
     action:
       type: youtube
@@ -18,7 +18,7 @@ schedules:
   - name: coffee_break_german
     lane: next
     lead: 300
-    time: "17:00"
+    every: "6h"
     select: sequential
     action:
       type: youtube
@@ -29,7 +29,7 @@ schedules:
   - name: history_of_philosophy
     lane: next
     lead: 300
-    time: "10:00"
+    every: "8h"
     select: sequential
     action:
       type: youtube
@@ -40,51 +40,128 @@ schedules:
   - name: ketab_baz
     lane: next
     lead: 300
-    time: "12:00"
+    every: "6h"
     select: shuffle
     action:
       type: youtube
       url: "https://www.youtube.com/channel/UC5HP2dpYw4Lbaxpc6bJ1jMQ"
       cache: content/media/cache
-
-
-  - name: great_courses
-    lane: next
-    lead: 300
-    time: "14:00"
-    select: shuffle
-    action:
-      type: youtube
-      url: "https://www.youtube.com/@TheGreatCourses"
-      cache: content/media/cache
+#
+#
+#  - name: great_courses
+#    lane: next
+#    lead: 300
+#    every: "8h"
+#    select: shuffle
+#    action:
+#      type: youtube
+#      url: "https://www.youtube.com/@TheGreatCourses"
+#      cache: content/media/cache
 
 
   - name: closer_to_truth
     lane: next
     lead: 300
-    time: "18:00"
+    every: "8h"
     select: shuffle
     action:
       type: youtube
       url: "https://www.youtube.com/@CloserToTruthTV"
       cache: content/media/cache
 
+#
+#  - name: funniest_comedy
+#    lane: next
+#    lead: 300
+#    every: "5h"
+#    select: random
+#    action:
+#      type: youtube
+#      url: "https://www.youtube.com/@funniestevercomedy"
+#      cache: content/media/cache
 
-  - name: funniest_comedy
+
+  - name: iranian_old_songs
     lane: next
     lead: 300
-    time: "21:00"
-    select: random
+    every: "4h"
+    select: shuffle
     action:
       type: youtube
-      url: "https://www.youtube.com/@funniestevercomedy"
+      url: "https://www.youtube.com/playlist?list=PLO2RiRpyKx47hr0UJwf4kR55IjMZ9Jm_V"
       cache: content/media/cache
+
+
+#  - name: relaxing_piano
+#    lane: next
+#    lead: 300
+#    every: "5h"
+#    select: shuffle
+#    action:
+#      type: youtube
+#      url: "https://www.youtube.com/playlist?list=PLj8KSxjsbhhX-b1knsbtlcwva6ZvKrhkk"
+#      cache: content/media/cache
+
+
+  - name: kurzgesagt_de
+    lane: next
+    lead: 300
+    every: "6h"
+    select: shuffle
+    action:
+      type: youtube
+      url: "https://www.youtube.com/@KurzgesagtDE"
+      cache: content/media/cache
+
+
+  - name: hardcore_history
+    lane: next
+    lead: 300
+    every: "12h"
+    select: sequential
+    action:
+      type: youtube
+      url: "https://www.youtube.com/playlist?list=PLIJumiHv10VhoiQHAahw2E9ErgZ-jc0tC"
+      cache: content/media/cache
+
+
+  - name: philosophize_this
+    lane: next
+    lead: 300
+    every: "8h"
+    select: sequential
+    action:
+      type: youtube
+      url: "https://www.youtube.com/playlist?list=PLaqiwaqzNEgEOqGaC1zFpsis30tiWuZVo"
+      cache: content/media/cache
+
+
+  - name: philosophy_overdose
+    lane: next
+    lead: 300
+    every: "8h"
+    select: shuffle
+    action:
+      type: youtube
+      url: "https://www.youtube.com/@Philosophy_Overdose"
+      cache: content/media/cache
+
+
+#  - name: philo_of_alexandria
+#    lane: next
+#    lead: 300
+#    every: "8h"
+#    select: shuffle
+#    action:
+#      type: youtube
+#      url: "https://www.youtube.com/@PhiloofAlexandria"
+#      cache: content/media/cache
 
 
   - name: hafez
     lane: next
     lead: 60
-    time: "15:00"
+    every: "4h"
     select: shuffle
     action:
       type: static
@@ -94,7 +171,7 @@ schedules:
   - name: blinkist
     lane: next
     lead: 60
-    time: "10:00"
+    every: "4h"
     select: sequential
     action:
       type: static
@@ -104,7 +181,7 @@ schedules:
   - name: fa_stories
     lane: next
     lead: 60
-    time: "16:00"
+    every: "4h"
     select: shuffle
     action:
       type: static
@@ -114,7 +191,7 @@ schedules:
   - name: poetry
     lane: next
     lead: 60
-    time: "19:00"
+    every: "5h"
     select: shuffle
     action:
       type: static
@@ -124,8 +201,36 @@ schedules:
   - name: short_stories
     lane: next
     lead: 60
-    time: "20:00"
+    every: "4h"
     select: sequential
     action:
       type: static
       dir: content/radio/short_stories
+
+
+  # ganjoor: random poem + recitation from ganjoor.net
+  # poet_id (0 = random poet):
+  #   حافظ 2, خیام 3, ابوسعید ابوالخیر 26, صائب 22, سعدی 7, باباطاهر 28,
+  #   مولوی 5, اوحدی 19, خواجو 20, شهریار 35, عراقی 21, فروغی بسطامی 32,
+  #   سلمان ساوجی 40, محتشم کاشانی 29, امیرخسرو دهلوی 34, سیف فرغانی 31,
+  #   عبید زاکانی 33, هاتف اصفهانی 25, رهی معیری 41
+  - name: ganjoor_hafez
+    lane: next
+    lead: 60
+    every: "3h"
+    select: random
+    action:
+      type: ganjoor
+      poet_id: 2
+      cache: content/media/cache
+
+
+  - name: ganjoor_random
+    lane: next
+    lead: 60
+    every: "4h"
+    select: random
+    action:
+      type: ganjoor
+      poet_id: 0
+      cache: content/media/cache

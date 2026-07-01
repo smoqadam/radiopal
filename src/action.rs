@@ -1,6 +1,8 @@
+mod ganjoor;
 mod static_action;
 mod youtube;
 
+pub use ganjoor::GanjoorConfig;
 pub use static_action::StaticConfig;
 pub use youtube::YoutubeConfig;
 
@@ -13,6 +15,7 @@ use std::path::PathBuf;
 pub enum Action {
     Static(StaticConfig),
     Youtube(YoutubeConfig),
+    Ganjoor(GanjoorConfig),
 }
 
 impl Action {
@@ -20,6 +23,7 @@ impl Action {
         match self {
             Action::Static(cfg) => cfg.candidates(),
             Action::Youtube(cfg) => cfg.candidates().await,
+            Action::Ganjoor(cfg) => cfg.candidates().await,
         }
     }
 
@@ -27,6 +31,7 @@ impl Action {
         match self {
             Action::Static(cfg) => cfg.materialize(chosen),
             Action::Youtube(cfg) => cfg.materialize(chosen).await,
+            Action::Ganjoor(cfg) => cfg.materialize(chosen).await,
         }
     }
 }
@@ -54,6 +59,30 @@ mod tests {
             action,
             Action::Youtube(YoutubeConfig {
                 url: "https://www.youtube.com/@some".to_string(),
+                cache: "media/cache".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn ganjoor_action_parses_with_defaults() {
+        let action: Action = noyalib::from_str("type: ganjoor\n").unwrap();
+        assert_eq!(
+            action,
+            Action::Ganjoor(GanjoorConfig {
+                poet_id: 0,
+                cache: "media/cache".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn ganjoor_action_parses_poet_id() {
+        let action: Action = noyalib::from_str("type: ganjoor\npoet_id: 7\n").unwrap();
+        assert_eq!(
+            action,
+            Action::Ganjoor(GanjoorConfig {
+                poet_id: 7,
                 cache: "media/cache".to_string(),
             })
         );
