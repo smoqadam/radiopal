@@ -17,6 +17,7 @@ const DEFAULT_STATE_FILE: &str = "selector_state.json";
 const DEFAULT_CONFIG_PATH: &str = "config/config.yaml";
 const DEFAULT_WEB_ADDR: &str = "0.0.0.0:8080";
 const DEFAULT_STREAM_URL: &str = "/stream";
+const DEFAULT_STATION_NAME: &str = "RadioPal";
 
 
 #[tokio::main]

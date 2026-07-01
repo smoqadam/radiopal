@@ -1,6 +1,9 @@
 tick_seconds: 10
 liquidsoap_addr: "127.0.0.1:1234"
 
+# station_name is the radio's display name (shown in the web ui masthead).
+station_name: "Radio Saeed"
+
 # web ui: served on 0.0.0.0:8080 (override with RADIOPAL_WEB_ADDR).
 # stream_url is where the browser <audio> element points — set it to your
 # public Icecast URL (host:icecast_port/mount).
@@ -9,7 +12,10 @@ stream_url: "http://localhost:8003/radio"
 
 schedules:
 
+  # `title` is the human-facing label (web ui + on-air metadata).
+  # It falls back to `name` when omitted.
   - name: calm
+    title: "Calm & Ambient"
     lane: next
     lead: 300
     every: "7h"

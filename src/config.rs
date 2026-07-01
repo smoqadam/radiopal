@@ -24,18 +24,28 @@ pub struct Config {
     pub liquidsoap_addr: Option<String>,
     pub web_addr: Option<String>,
     pub stream_url: Option<String>,
+    pub station_name: Option<String>,
     schedules: Vec<ScheduleConfig>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct ScheduleConfig {
     pub name: String,
+    #[serde(default)]
+    pub title: Option<String>,
     pub lane: Lane,
     pub lead: Option<i32>,
     pub every: Option<String>,
     pub time: Option<String>,
     pub select: SelectKind,
     pub action: Action,
+}
+
+impl ScheduleConfig {
+    /// Human-facing label: the optional `title`, falling back to `name`.
+    pub fn display(&self) -> String {
+        self.title.clone().unwrap_or_else(|| self.name.clone())
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -155,8 +165,10 @@ schedules:
             liquidsoap_addr: None,
             web_addr: None,
             stream_url: None,
+            station_name: None,
             schedules: vec![ScheduleConfig {
                 name: "short_stories".to_string(),
+                title: None,
                 lead: Some(20),
                 lane: Lane::Duck,
                 every: Some("2h".to_string()),

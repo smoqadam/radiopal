@@ -30,9 +30,12 @@ Everything lives in `config/config.yaml`.
 ```yaml
 tick_seconds: 10                 # scheduler poll interval (optional)
 liquidsoap_addr: "127.0.0.1:1234"
+station_name: "Radio Saeed"      # radio's display name (web ui)
+stream_url: "http://host:8003/radio"   # where the web player connects
 
 schedules:
   - name: history_of_philosophy
+    title: "History of Philosophy" # human-facing label (web ui + on-air metadata)
     lane: next                   # next | duck | takeover
     lead: 300                    # prepare 300s before the slot
     every: "8h"                  # OR  time: "10:00"  (pick one)
@@ -42,6 +45,9 @@ schedules:
       url: "https://www.youtube.com/playlist?list=..."
       cache: content/media/cache
 ```
+
+`title` is optional and falls back to `name`. It's what listeners see in the web
+UI and what Icecast broadcasts as the track title.
 
 ### Timing — `every` vs `time`
 
@@ -101,23 +107,21 @@ action:
 
 ## Web UI
 
-The scheduler serves a minimal web page (`web/index.html`) with a player,
-the currently-playing program, and the schedule table. It listens on
-`0.0.0.0:8080` by default.
+The scheduler serves a minimal web page (`web/index.html`) with a player, the
+station name, the currently-playing program, and a schedule table with live
+countdowns to each program's next run (the soonest is flagged "up next"). It
+listens on `0.0.0.0:8080` by default.
 
 - `GET /` — the UI.
-- `GET /api/state` — JSON: `{ stream_url, now, schedules }`.
+- `GET /api/state` — JSON: `{ station, stream_url, now, schedules }`, where each
+  schedule includes a `next_run` (unix seconds) for the countdown.
 
-The in-page player points at `stream_url` (your Icecast stream). Set it in
-`config.yaml`:
+The in-page player points at `stream_url` (your Icecast stream); set it and
+`station_name` in `config.yaml`.
 
-```yaml
-stream_url: "http://your-host:8003/radio"
-```
-
-"Now playing" reflects the most recent clip the scheduler pushed. With the
-`next` lane, that clip may be queued behind the current track, so it's a
-best-effort indicator rather than exact stream metadata.
+"Now playing" is read live from Liquidsoap (`request.on_air`), so it reflects the
+actual on-air audio — music bed or program. If Liquidsoap can't be reached, it
+falls back to the last clip the scheduler pushed.
 
 ## Running
 

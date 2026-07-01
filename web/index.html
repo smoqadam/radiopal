@@ -149,11 +149,6 @@
       color: var(--ink);
       margin-bottom: 3px;
     }
-    .now-clip {
-      font-size: 12px;
-      color: var(--ink-dim);
-      word-break: break-all;
-    }
     .now-time {
       font-size: 11px;
       color: var(--ink-faint);
@@ -191,6 +186,24 @@
     td.dim { color: var(--ink-dim); }
     tr.live td { background: rgba(255,255,255,0.03); }
     tr.live td.name { color: var(--accent); }
+    tr.next td.name { color: var(--ink); }
+
+    .when-timing { color: var(--ink-dim); }
+    .countdown { display: block; font-size: 10.5px; color: var(--ink-faint); letter-spacing: 0.3px; margin-top: 2px; }
+    .countdown.soon { color: var(--accent); }
+    .countdown.onair { color: var(--accent); }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 18px;
+      border-top: 1px solid var(--hairline);
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      color: var(--ink-faint);
+      text-align: center;
+    }
+    .footer a { color: var(--ink-dim); text-decoration: none; border-bottom: 1px solid var(--accent-dim); }
+    .footer a:hover { color: var(--ink); }
 
     .chip {
       display: inline-block;
@@ -223,7 +236,7 @@
 <div class="wrap">
   <div class="masthead">
     <div class="wordmark">
-      <span class="wordmark-main">RadioPal</span>
+      <span class="wordmark-main" id="station">Radio</span>
       <span class="wordmark-freq">On&nbsp;Air</span>
     </div>
     <div class="lamp-row">
@@ -237,7 +250,6 @@
 
     <div class="now-label">Now playing</div>
     <div class="now-name" id="now-name">—</div>
-    <div class="now-clip" id="now-clip"></div>
     <div class="now-time" id="now-time"></div>
     <audio id="audio" controls preload="none"></audio>
   </div>
@@ -249,6 +261,8 @@
     </thead>
     <tbody id="rows"></tbody>
   </table>
+
+  <footer class="footer">made by <a href="https://github.com/smoqadam/radiopal" rel="noopener">RadioPal</a></footer>
 </div>
 
 <script>
@@ -293,26 +307,70 @@
     return `${Math.floor(s / 3600)}h ago`;
   }
 
+  // "in 2h 14m" / "in 45m" / "in 30s" until a unix timestamp.
+  function until(ts) {
+    let s = ts - Math.floor(Date.now() / 1000);
+    if (s <= 0) return 'due now';
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    if (h > 0) return `in ${h}h ${m}m`;
+    if (m > 0) return `in ${m}m`;
+    return `in ${s}s`;
+  }
+
+  function esc(str) {
+    return String(str).replace(/[&<>"]/g, c => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
+    ));
+  }
+
+  let last = null;
+
   function render(state) {
+    last = state;
     streamUrl = state.stream_url;
 
+    if (state.station) {
+      document.getElementById('station').textContent = state.station;
+      document.title = state.station;
+    }
+
     const now = state.now;
+    const liveTitle = now ? now.name : null;
     document.getElementById('now-name').textContent = now ? now.name : 'nothing on air';
-    document.getElementById('now-clip').textContent = now && now.clip ? now.clip : '';
     document.getElementById('now-time').textContent = now && now.since ? 'started ' + ago(now.since) : '';
 
     lampEl.classList.toggle('on', !!now);
     lampLabelEl.classList.toggle('on', !!now);
     lampLabelEl.textContent = now ? 'ON AIR' : 'OFF AIR';
 
-    const rows = state.schedules.map(s => `
-      <tr class="${now && now.name === s.name ? 'live' : ''}">
-        <td class="name">${s.name}</td>
-        <td class="dim" data-label="When">${s.timing}</td>
-        <td><span class="chip">${s.lane}</span></td>
-        <td class="dim" data-label="Select">${s.select}</td>
-        <td class="dim" data-label="Source">${s.action}</td>
-      </tr>`).join('');
+    // The soonest-upcoming schedule that isn't already on air → "up next".
+    let soonest = null;
+    for (const s of state.schedules) {
+      if (s.title === liveTitle) continue;
+      if (!soonest || s.next_run < soonest.next_run) soonest = s;
+    }
+
+    const rows = state.schedules.map(s => {
+      const isLive = s.title === liveTitle;
+      const isNext = !isLive && soonest && s.title === soonest.title;
+      const secs = s.next_run - Math.floor(Date.now() / 1000);
+      let cd, cdClass = 'countdown';
+      if (isLive) { cd = 'on air now'; cdClass += ' onair'; }
+      else { cd = until(s.next_run); if (isNext || secs < 900) cdClass += ' soon'; }
+      if (isNext) cd = 'up next · ' + cd;
+
+      return `
+      <tr class="${isLive ? 'live' : ''}${isNext ? ' next' : ''}">
+        <td class="name">${esc(s.title)}</td>
+        <td data-label="When">
+          <span class="when-timing">${esc(s.timing)}</span>
+          <span class="${cdClass}">${cd}</span>
+        </td>
+        <td><span class="chip">${esc(s.lane)}</span></td>
+        <td class="dim" data-label="Select">${esc(s.select)}</td>
+        <td class="dim" data-label="Source">${esc(s.action)}</td>
+      </tr>`;
+    }).join('');
     document.getElementById('rows').innerHTML = rows;
   }
 
@@ -325,6 +383,8 @@
 
   poll();
   setInterval(poll, 5000);
+  // Tick countdowns every second between server polls.
+  setInterval(() => { if (last) render(last); }, 1000);
 </script>
 </body>
 </html>

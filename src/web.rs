@@ -1,8 +1,9 @@
 use crate::action::Action;
 use crate::config::Lane;
 use crate::liquidsoap;
-use crate::schedule::ScheduledEntry;
+use crate::schedule::{Schedule, ScheduledEntry, next_slot};
 use crate::selector::SelectKind;
+use chrono::Local;
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -19,13 +20,30 @@ pub struct NowPlaying {
     pub since: u64,
 }
 
-#[derive(Serialize)]
 pub struct ScheduleView {
-    pub name: String,
+    pub title: String,
     pub lane: String,
     pub timing: String,
     pub select: String,
     pub action: String,
+    schedule: Schedule,
+}
+
+impl ScheduleView {
+    /// Serialize with a live `next_run` (unix seconds) so the UI can count down.
+    fn to_json(&self) -> serde_json::Value {
+        let next = next_slot(&self.schedule, Local::now())
+            .timestamp()
+            .max(0) as u64;
+        serde_json::json!({
+            "title": self.title,
+            "lane": self.lane,
+            "timing": self.timing,
+            "select": self.select,
+            "action": self.action,
+            "next_run": next,
+        })
+    }
 }
 
 impl From<&ScheduledEntry> for ScheduleView {
@@ -37,7 +55,7 @@ impl From<&ScheduledEntry> for ScheduleView {
             _ => "-".to_string(),
         };
         ScheduleView {
-            name: c.name.clone(),
+            title: c.display(),
             lane: match c.lane {
                 Lane::Next => "next",
                 Lane::Duck => "duck",
@@ -57,12 +75,14 @@ impl From<&ScheduledEntry> for ScheduleView {
                 Action::Ganjoor(_) => "ganjoor",
             }
             .to_string(),
+            schedule: sc.schedule.clone(),
         }
     }
 }
 
 #[derive(Clone)]
 pub struct WebState {
+    pub station: String,
     pub stream_url: String,
     pub liq_addr: String,
     pub schedules: Arc<Vec<ScheduleView>>,
@@ -71,10 +91,12 @@ pub struct WebState {
 
 impl WebState {
     async fn state_json(&self) -> String {
+        let schedules: Vec<_> = self.schedules.iter().map(ScheduleView::to_json).collect();
         serde_json::json!({
+            "station": self.station,
             "stream_url": self.stream_url,
             "now": self.current_now().await,
-            "schedules": *self.schedules,
+            "schedules": schedules,
         })
         .to_string()
     }

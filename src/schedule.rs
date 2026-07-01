@@ -7,10 +7,32 @@ use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::path::PathBuf;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Schedule {
     At(NaiveTime),
     Every(Duration),
+}
+
+/// The next time this schedule should fire, at or after `now`.
+pub fn next_slot(schedule: &Schedule, now: DateTime<Local>) -> DateTime<Local> {
+    let slot = match schedule {
+        Schedule::At(t) => {
+            let today = now.date_naive().and_time(*t);
+            if today >= now.naive_local() {
+                today
+            } else {
+                today + Duration::days(1)
+            }
+        }
+        Schedule::Every(d) => {
+            let midnight = now.date_naive().and_hms_opt(0, 0, 0).unwrap();
+            let elapsed = now.time() - midnight.time();
+            let step = d.num_seconds();
+            let n = (elapsed.num_seconds() + step - 1) / step; // ceil
+            midnight + *d * (n as i32)
+        }
+    };
+    slot.and_local_timezone(Local).unwrap()
 }
 
 impl Schedule {
@@ -110,30 +132,7 @@ impl ScheduledEntry {
     }
 
     pub fn due(&self, now: DateTime<Local>) -> DateTime<Local> {
-        let slot = match &self.schedule {
-            Schedule::At(t) => {
-                let today = now.date_naive().and_time(*t);
-                if today >= now.naive_local() {
-                    today
-                } else {
-                    today + Duration::days(1)
-                }
-            }
-            Schedule::Every(d) => {
-                let midnight = now
-                    .date_naive()
-                    .and_hms_opt(0, 0, 0)
-                    .unwrap();
-
-                let elapsed = now.time() - midnight.time();
-                let step = d.num_seconds();
-
-                let n = (elapsed.num_seconds() + step - 1) / step; // ceil
-
-                midnight + *d * (n as i32)
-            }
-        };
-        slot.and_local_timezone(Local).unwrap()
+        next_slot(&self.schedule, now)
     }
 }
 
@@ -192,6 +191,7 @@ mod tests {
     fn cfg(time: Option<String>, every: Option<String>) -> ScheduleConfig {
         ScheduleConfig {
             name: "".to_string(),
+            title: None,
             lane: Lane::Next,
             lead: None,
             every,

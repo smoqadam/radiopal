@@ -5,8 +5,8 @@ use crate::selector::Selector;
 use crate::store::{SelectorState, SelectorStore};
 use crate::web::{self, WebState};
 use crate::{
-    DEFAULT_LIQUIDSOAP_ADDR, DEFAULT_STATE_FILE, DEFAULT_STREAM_URL, DEFAULT_TICK_SEC,
-    DEFAULT_WEB_ADDR, liquidsoap,
+    DEFAULT_LIQUIDSOAP_ADDR, DEFAULT_STATE_FILE, DEFAULT_STATION_NAME, DEFAULT_STREAM_URL,
+    DEFAULT_TICK_SEC, DEFAULT_WEB_ADDR, liquidsoap,
 };
 use chrono::{DateTime, Local};
 use std::mem;
@@ -54,6 +54,10 @@ impl Scheduler {
         let web_addr = std::env::var("RADIOPAL_WEB_ADDR")
             .unwrap_or_else(|_| DEFAULT_WEB_ADDR.to_string());
         let web_state = WebState {
+            station: config
+                .station_name
+                .clone()
+                .unwrap_or_else(|| DEFAULT_STATION_NAME.to_string()),
             stream_url: config
                 .stream_url
                 .clone()
@@ -118,11 +122,12 @@ impl Scheduler {
                     let addr = liq_addr.clone();
                     let lane = sc.config.lane.clone();
                     let name = sc.config.name.clone();
+                    let title = sc.config.display();
                     if let Ok(mut guard) = now_playing.lock() {
-                        *guard = Some(web::now_playing(name.clone(), clip.display().to_string()));
+                        *guard = Some(web::now_playing(title.clone(), clip.display().to_string()));
                     }
                     spawn(async move {
-                        match liquidsoap::push(&addr, &lane, &clip, &name).await {
+                        match liquidsoap::push(&addr, &lane, &clip, &title).await {
                             Ok(resp) => {
                                 println!("[play] {name} -> {} (slot {slot}) [{resp}]", clip.display())
                             }
