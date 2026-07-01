@@ -99,6 +99,26 @@ action:
   cache: content/media/cache
 ```
 
+## Web UI
+
+The scheduler serves a minimal web page (`web/index.html`) with a player,
+the currently-playing program, and the schedule table. It listens on
+`0.0.0.0:8080` by default.
+
+- `GET /` — the UI.
+- `GET /api/state` — JSON: `{ stream_url, now, schedules }`.
+
+The in-page player points at `stream_url` (your Icecast stream). Set it in
+`config.yaml`:
+
+```yaml
+stream_url: "http://your-host:8003/radio"
+```
+
+"Now playing" reflects the most recent clip the scheduler pushed. With the
+`next` lane, that clip may be queued behind the current track, so it's a
+best-effort indicator rather than exact stream metadata.
+
 ## Running
 
 With Docker Compose (scheduler + Liquidsoap + Icecast):
@@ -117,6 +137,7 @@ The stream is served by Icecast (default mount `/radio`).
 | `RADIOPAL_CONFIG`          | `config/config.yaml`     | Path to the config file          |
 | `RADIOPAL_LIQUIDSOAP_ADDR` | `127.0.0.1:1234`         | Liquidsoap telnet address        |
 | `RADIOPAL_STATE_FILE`      | `selector_state.json`    | Where selector state is persisted |
+| `RADIOPAL_WEB_ADDR`        | `0.0.0.0:8080`           | Web UI bind address              |
 
 ## Development
 

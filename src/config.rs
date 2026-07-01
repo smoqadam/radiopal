@@ -22,6 +22,8 @@ pub struct Config {
     pub lead_seconds: Option<u32>,
     pub tick_seconds: Option<u64>,
     pub liquidsoap_addr: Option<String>,
+    pub web_addr: Option<String>,
+    pub stream_url: Option<String>,
     schedules: Vec<ScheduleConfig>,
 }
 
@@ -151,6 +153,8 @@ schedules:
             lead_seconds: Some(30),
             tick_seconds: Some(10),
             liquidsoap_addr: None,
+            web_addr: None,
+            stream_url: None,
             schedules: vec![ScheduleConfig {
                 name: "short_stories".to_string(),
                 lead: Some(20),

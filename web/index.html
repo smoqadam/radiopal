@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RadioPal</title>
+<style>
+  * { box-sizing: border-box; border-radius: 0; }
+  html, body { margin: 0; }
+  body {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: #111;
+    color: #eee;
+    line-height: 1.5;
+    font-size: 14px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 64px; }
+
+  header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 32px; }
+  h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: 1px; }
+  .tag { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+
+  .player {
+    background: #1a1a1a;
+    border-left: 3px solid #4ade80;
+    padding: 20px;
+    margin-bottom: 32px;
+  }
+  .label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .now-name { font-size: 20px; font-weight: 600; margin-bottom: 2px; }
+  .now-clip { font-size: 12px; color: #888; word-break: break-all; }
+  .now-time { font-size: 11px; color: #666; margin-top: 6px; }
+
+  audio { width: 100%; margin-top: 16px; }
+
+  h2 { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 10px; font-size: 13px; border-bottom: 1px solid #262626; }
+  th { color: #666; font-weight: 400; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  td.name { color: #eee; }
+  td.dim { color: #888; }
+  tr.live td { background: #182418; }
+
+  .chip {
+    display: inline-block; padding: 1px 6px; font-size: 11px;
+    background: #262626; color: #aaa;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>RADIOPAL</h1>
+    <span class="tag">live stream</span>
+  </header>
+
+  <div class="player">
+    <div class="label">Now playing</div>
+    <div class="now-name" id="now-name">—</div>
+    <div class="now-clip" id="now-clip"></div>
+    <div class="now-time" id="now-time"></div>
+    <audio id="audio" controls preload="none"></audio>
+  </div>
+
+  <h2>Schedule</h2>
+  <table>
+    <thead>
+      <tr><th>Program</th><th>When</th><th>Lane</th><th>Select</th><th>Source</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<script>
+  const audio = document.getElementById('audio');
+  let streamUrl = null;
+
+  // Fresh URL each connection: bypasses HTTP/media caching so we always
+  // attach at the live edge instead of replaying buffered/cached bytes.
+  function liveSrc() {
+    return streamUrl + (streamUrl.includes('?') ? '&' : '?') + '_=' + Date.now();
+  }
+
+  // Connect only when the user presses play, and reconnect on every (re)play
+  // so pausing then resuming jumps back to live rather than the stale buffer.
+  audio.addEventListener('play', () => {
+    if (!streamUrl || audio.dataset.live) return;
+    audio.dataset.live = '1';
+    audio.src = liveSrc();
+    audio.load();
+    audio.play().catch(() => {});
+  });
+  audio.addEventListener('pause', () => { delete audio.dataset.live; });
+
+  function ago(since) {
+    if (!since) return '';
+    const s = Math.max(0, Math.floor(Date.now() / 1000) - since);
+    if (s < 60) return `${s}s ago`;
+    if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+    return `${Math.floor(s / 3600)}h ago`;
+  }
+
+  function render(state) {
+    streamUrl = state.stream_url;
+
+    const now = state.now;
+    document.getElementById('now-name').textContent = now ? now.name : 'nothing on air';
+    document.getElementById('now-clip').textContent = now ? now.clip : '';
+    document.getElementById('now-time').textContent = now ? 'started ' + ago(now.since) : '';
+
+    const rows = state.schedules.map(s => `
+      <tr class="${now && now.name === s.name ? 'live' : ''}">
+        <td class="name">${s.name}</td>
+        <td class="dim">${s.timing}</td>
+        <td><span class="chip">${s.lane}</span></td>
+        <td class="dim">${s.select}</td>
+        <td class="dim">${s.action}</td>
+      </tr>`).join('');
+    document.getElementById('rows').innerHTML = rows;
+  }
+
+  async function poll() {
+    try {
+      const r = await fetch('/api/state');
+      render(await r.json());
+    } catch (e) { /* keep last view */ }
+  }
+
+  poll();
+  setInterval(poll, 5000);
+</script>
+</body>
+</html>

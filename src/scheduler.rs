@@ -3,10 +3,15 @@ use crate::config::Config;
 use crate::schedule::{ScheduledEntry, Stage};
 use crate::selector::Selector;
 use crate::store::{SelectorState, SelectorStore};
-use crate::{DEFAULT_LIQUIDSOAP_ADDR, DEFAULT_STATE_FILE, DEFAULT_TICK_SEC, liquidsoap};
+use crate::web::{self, WebState};
+use crate::{
+    DEFAULT_LIQUIDSOAP_ADDR, DEFAULT_STATE_FILE, DEFAULT_STREAM_URL, DEFAULT_TICK_SEC,
+    DEFAULT_WEB_ADDR, liquidsoap,
+};
 use chrono::{DateTime, Local};
 use std::mem;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio::{spawn, time};
@@ -44,6 +49,19 @@ impl Scheduler {
                 sc.selector = selector.clone();
             }
         }
+
+        let now_playing = Arc::new(Mutex::new(None));
+        let web_addr = std::env::var("RADIOPAL_WEB_ADDR")
+            .unwrap_or_else(|_| DEFAULT_WEB_ADDR.to_string());
+        let web_state = WebState {
+            stream_url: config
+                .stream_url
+                .clone()
+                .unwrap_or_else(|| DEFAULT_STREAM_URL.to_string()),
+            schedules: Arc::new(schedules.iter().map(Into::into).collect()),
+            now: now_playing.clone(),
+        };
+        spawn(web::serve(web_addr, web_state));
 
         let mut interval = time::interval(Duration::from_secs(tick_sec));
         let (tx, mut rx) = tokio::sync::mpsc::channel::<PrepareResult>(100);
@@ -99,6 +117,9 @@ impl Scheduler {
                     let addr = liq_addr.clone();
                     let lane = sc.config.lane.clone();
                     let name = sc.config.name.clone();
+                    if let Ok(mut guard) = now_playing.lock() {
+                        *guard = Some(web::now_playing(name.clone(), clip.display().to_string()));
+                    }
                     spawn(async move {
                         match liquidsoap::push(&addr, &lane, &clip).await {
                             Ok(resp) => {
