@@ -1,10 +1,11 @@
 use crate::action::Action;
 use crate::config::Lane;
+use crate::liquidsoap;
 use crate::schedule::ScheduledEntry;
 use crate::selector::SelectKind;
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio::spawn;
@@ -63,20 +64,46 @@ impl From<&ScheduledEntry> for ScheduleView {
 #[derive(Clone)]
 pub struct WebState {
     pub stream_url: String,
+    pub liq_addr: String,
     pub schedules: Arc<Vec<ScheduleView>>,
     pub now: Arc<Mutex<Option<NowPlaying>>>,
 }
 
 impl WebState {
-    fn state_json(&self) -> String {
-        let now = self.now.lock().ok().and_then(|g| g.clone());
+    async fn state_json(&self) -> String {
         serde_json::json!({
             "stream_url": self.stream_url,
-            "now": now,
+            "now": self.current_now().await,
             "schedules": *self.schedules,
         })
         .to_string()
     }
+
+    /// Ask Liquidsoap what is actually on air (music bed or a pushed program);
+    /// that's the source of truth. Fall back to the last clip we pushed only if
+    /// Liquidsoap can't be reached.
+    async fn current_now(&self) -> Option<serde_json::Value> {
+        let live = tokio::time::timeout(Duration::from_secs(2), liquidsoap::current(&self.liq_addr))
+            .await;
+        match live {
+            Ok(Ok(Some(track))) => {
+                let name = track
+                    .title
+                    .clone()
+                    .or_else(|| track.filename.as_deref().map(basename))
+                    .unwrap_or_else(|| "on air".to_string());
+                Some(serde_json::json!({ "name": name, "clip": track.filename }))
+            }
+            Ok(Ok(None)) => None, // nothing on air
+            _ => self.now.lock().ok().and_then(|g| g.clone()).map(|n| {
+                serde_json::json!({ "name": n.name, "clip": n.clip, "since": n.since })
+            }),
+        }
+    }
+}
+
+fn basename(path: &str) -> String {
+    path.rsplit(['/', '\\']).next().unwrap_or(path).to_string()
 }
 
 pub fn now_playing(name: String, clip: String) -> NowPlaying {
@@ -125,7 +152,7 @@ async fn handle(mut sock: tokio::net::TcpStream, state: &WebState) -> std::io::R
 
     let (status, ctype, body) = match path {
         "/" => ("200 OK", "text/html; charset=utf-8", INDEX_HTML.to_string()),
-        "/api/state" => ("200 OK", "application/json", state.state_json()),
+        "/api/state" => ("200 OK", "application/json", state.state_json().await),
         _ => ("404 Not Found", "text/plain", "not found".to_string()),
     };
 

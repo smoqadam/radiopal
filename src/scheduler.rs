@@ -58,6 +58,7 @@ impl Scheduler {
                 .stream_url
                 .clone()
                 .unwrap_or_else(|| DEFAULT_STREAM_URL.to_string()),
+            liq_addr: liq_addr.clone(),
             schedules: Arc::new(schedules.iter().map(Into::into).collect()),
             now: now_playing.clone(),
         };
@@ -121,7 +122,7 @@ impl Scheduler {
                         *guard = Some(web::now_playing(name.clone(), clip.display().to_string()));
                     }
                     spawn(async move {
-                        match liquidsoap::push(&addr, &lane, &clip).await {
+                        match liquidsoap::push(&addr, &lane, &clip, &name).await {
                             Ok(resp) => {
                                 println!("[play] {name} -> {} (slot {slot}) [{resp}]", clip.display())
                             }
